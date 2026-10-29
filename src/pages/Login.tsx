@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import type { Sessao } from "@/types";
 import { api, modoLocal } from "@/api";
+import { configuracaoSupabaseIncompleta, usandoSupabase } from "@/supabaseBackend";
 import { Icon } from "@/components/Icon";
 import { Aviso, Botao, Campo, Entrada } from "@/components/ui";
 import { LogoIcon } from "@/components/Logo";
@@ -138,7 +139,7 @@ export default function Login({ aoEntrar }: { aoEntrar: (s: Sessao) => void }) {
                   required
                   value={form.usuario}
                   onChange={(e) => setForm({ ...form, usuario: e.target.value })}
-                  placeholder="admin"
+                  placeholder={usandoSupabase ? "seu@email.com" : "admin"}
                   autoComplete="username"
                 />
               </Campo>
@@ -182,12 +183,12 @@ export default function Login({ aoEntrar }: { aoEntrar: (s: Sessao) => void }) {
             </form>
           ) : (
             <form onSubmit={entrar} className="space-y-3.5">
-              <Campo rotulo="Usuário ou e-mail">
+              <Campo rotulo={usandoSupabase ? "E-mail" : "Usuário ou e-mail"}>
                 <Entrada
                   required
                   value={usuario}
                   onChange={(e) => setUsuario(e.target.value)}
-                  placeholder="admin"
+                  placeholder={usandoSupabase ? "seu@email.com" : "admin"}
                   autoComplete="username"
                   autoFocus
                 />
@@ -232,6 +233,8 @@ export default function Login({ aoEntrar }: { aoEntrar: (s: Sessao) => void }) {
               )}
             </form>
           )}
+
+          {configuracaoSupabaseIncompleta && <Aviso tom="erro">Configuração incompleta: informe a URL e a chave pública do Supabase no build. O aplicativo não voltará automaticamente para o Google Sheets.</Aviso>}
 
           {erro && (
             <div className="mt-4">

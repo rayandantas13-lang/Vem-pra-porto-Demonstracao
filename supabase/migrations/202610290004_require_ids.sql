@@ -1,0 +1,2 @@
+alter table public.vpp_vouchers drop constraint vpp_vouchers_data_check, add constraint vpp_vouchers_data_check check (jsonb_typeof(data) = 'object' and coalesce(data->>'id' = id, false) and length(id) between 1 and 200);
+alter table public.vpp_gastos drop constraint vpp_gastos_data_check, add constraint vpp_gastos_data_check check (jsonb_typeof(data) = 'object' and coalesce(data->>'id' = id, false) and length(id) between 1 and 200);

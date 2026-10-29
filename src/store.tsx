@@ -9,6 +9,7 @@ import {
 } from "react";
 import type { Config, GastoOperacional, ID, Sessao, StatusVoucher, Usuario, Voucher } from "@/types";
 import { api, modoLocal, versaoDesatualizada } from "@/api";
+import { restaurarSupabase, usandoSupabase } from "@/supabaseBackend";
 import { CONFIG_PADRAO } from "@/data/seed";
 import { normalizarVoucher, parseNumero, uid } from "@/lib/utils";
 
@@ -110,7 +111,7 @@ interface Ctx {
 const StoreCtx = createContext<Ctx | null>(null);
 
 export function StoreProvider({ children }: { children: ReactNode }) {
-  const [sessao, setSessao] = useState<Sessao | null>(lerSessao);
+  const [sessao, setSessao] = useState<Sessao | null>(() => usandoSupabase ? null : lerSessao());
   const [verificando, setVerificando] = useState(true);
   const [carregando, setCarregando] = useState(false);
   const [erroCarga, setErroCarga] = useState("");
@@ -129,6 +130,10 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
+    if (usandoSupabase) {
+      restaurarSupabase().then(setSessao).catch(() => setSessao(null)).finally(() => setVerificando(false));
+      return;
+    }
     const guardada = lerSessao();
     if (!guardada) {
       setVerificando(false);
@@ -165,7 +170,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
-    if (!sessao) return;
+    if (!sessao || usandoSupabase) return;
 
     // Não encerramos mais por inatividade. A sessão só cai quando o servidor
     // diz que expirou (após 10 dias, renováveis pela metade do prazo). Aqui
@@ -248,7 +253,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       apiDesatualizada,
 
       entrar: (s) => {
-        gravarSessao(s);
+        if (!usandoSupabase) gravarSessao(s);
         setSessao(s);
       },
       sair: async () => {

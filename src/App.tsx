@@ -9,6 +9,7 @@ import Vouchers from "@/pages/Vouchers";
 import Configuracoes from "@/pages/Configuracoes";
 import Financeiro from "@/pages/Financeiro";
 import { AVISO_IMPLANTACAO_ANTIGA } from "@/api";
+import { usandoSupabase } from "@/supabaseBackend";
 import { dataCompleta, hoje, iniciais, totalPessoas } from "@/lib/utils";
 import { cn } from "@/utils/cn";
 
@@ -230,7 +231,7 @@ function Painel() {
                 "hidden items-center gap-2 rounded-xl bg-white px-3 py-2 text-xs font-semibold ring-1 sm:flex",
                 local ? "text-amber-700 ring-amber-200" : "text-slate-600 ring-slate-200",
               )}
-              title={local ? "Dados apenas neste navegador" : "Salvando no Google Sheets"}
+              title={local ? "Dados apenas neste navegador" : usandoSupabase ? "Salvando no Supabase" : "Salvando no Google Sheets"}
             >
               <span className="relative flex size-2">
                 {!local && (
@@ -270,11 +271,14 @@ function Painel() {
             <div className="flex min-h-[60vh] flex-col items-center justify-center gap-3 text-slate-400">
               <Icon name="refresh" className="size-7 animate-spin text-sky-500" />
               <span className="text-sm font-medium">
-                {local ? "Carregando dados..." : "Carregando dados do Google Sheets..."}
+                {local ? "Carregando dados..." : usandoSupabase ? "Carregando dados do Supabase..." : "Carregando dados do Google Sheets..."}
               </span>
             </div>
           ) : (
             <div key={atual.id} className="anim-up space-y-5">
+              {usandoSupabase && import.meta.env.VITE_MIGRACAO_TESTE === "1" && (
+                <div className="rounded-xl bg-amber-50 px-4 py-3 text-sm font-medium text-amber-900 ring-1 ring-amber-200">Prévia de migração: alterações feitas aqui não são sincronizadas com o Google Sheets. Não use esta prévia para trabalho real até a troca definitiva.</div>
+              )}
               {apiDesatualizada && (
                 <div className="flex items-start gap-2.5 rounded-xl bg-amber-50 px-4 py-3 text-sm font-medium text-amber-800 ring-1 ring-amber-200">
                   <Icon name="alert" className="mt-0.5 size-4 shrink-0" />

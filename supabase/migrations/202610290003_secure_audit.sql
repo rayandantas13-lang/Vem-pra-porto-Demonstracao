@@ -1,0 +1,10 @@
+alter table public.vpp_vouchers drop constraint vpp_vouchers_check, add constraint vpp_vouchers_data_check check (jsonb_typeof(data) = 'object' and data ? 'id' and data->>'id' = id);
+alter table public.vpp_gastos drop constraint vpp_gastos_check, add constraint vpp_gastos_data_check check (jsonb_typeof(data) = 'object' and data ? 'id' and data->>'id' = id);
+create table migration_private.vpp_event_log (id bigint generated always as identity primary key, usuario_id uuid, acao text not null, recurso text not null, recurso_id text, criado_em timestamptz not null default now());
+revoke all on migration_private.vpp_event_log from public, anon, authenticated;
+alter table migration_private.vpp_event_log enable row level security;
+create function public.vpp_auditar() returns trigger language plpgsql security definer set search_path = pg_catalog, migration_private as $$ begin insert into migration_private.vpp_event_log(usuario_id, acao, recurso, recurso_id) values (auth.uid(), TG_OP, TG_TABLE_NAME, case when TG_TABLE_NAME='vpp_config' then 'geral' when TG_OP='DELETE' then old.id::text else new.id::text end); if TG_OP='DELETE' then return old; end if; return new; end $$;
+revoke all on function public.vpp_auditar() from public, anon, authenticated;
+create trigger auditoria_vouchers after insert or update or delete on public.vpp_vouchers for each row execute function public.vpp_auditar();
+create trigger auditoria_gastos after insert or update or delete on public.vpp_gastos for each row execute function public.vpp_auditar();
+create trigger auditoria_config after update on public.vpp_config for each row execute function public.vpp_auditar();

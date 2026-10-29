@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { usandoSupabase } from "@/supabaseBackend";
 import { useStore } from "@/store";
 import type { Config, Servico, Usuario, Voucher } from "@/types";
 import {
@@ -520,6 +521,10 @@ export default function Configuracoes() {
         </div>
       </Cartao>
 
+      {usandoSupabase ? (
+        <Cartao className="p-5"><h2 className="font-bold">Banco de dados · Supabase</h2><p className="mt-1 text-sm text-slate-500">Os dados são protegidos por autenticação e regras de acesso do Supabase.</p></Cartao>
+      ) : (
+        <>
       {/* Banco de dados */}
       <Cartao className="overflow-hidden">
         <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 px-5 py-4">
@@ -637,6 +642,9 @@ export default function Configuracoes() {
         </div>
       </Cartao>
 
+        </>
+      )}
+
       {/* Usuários */}
       <Cartao>
         <div className="flex items-center justify-between gap-3 border-b border-slate-100 px-5 py-4">
@@ -649,7 +657,7 @@ export default function Configuracoes() {
               <p className="text-xs text-slate-500">Somente administradores gerenciam usuários.</p>
             </div>
           </div>
-          <Botao
+          {!usandoSupabase && <Botao
             icone="plus"
             onClick={() => {
               setErroUsuario("");
@@ -657,9 +665,10 @@ export default function Configuracoes() {
             }}
           >
             Novo
-          </Botao>
+          </Botao>}
         </div>
 
+        {usandoSupabase && <p className="px-5 py-3 text-xs text-slate-500">A criação e alteração de acessos é feita pelo administrador no painel do Supabase.</p>}
         <ul className="divide-y divide-slate-50">
           {usuarios.map((u) => (
             <li key={u.id} className="flex items-center gap-3 px-5 py-3.5">
@@ -684,6 +693,7 @@ export default function Configuracoes() {
                 </p>
               </div>
               <button
+                disabled={usandoSupabase}
                 onClick={() => alternarUsuario(u)}
                 className={cn(
                   "shrink-0 rounded-lg px-2.5 py-1.5 text-[11px] font-bold transition",
@@ -704,6 +714,7 @@ export default function Configuracoes() {
         </ul>
       </Cartao>
 
+      {!usandoSupabase && (<>
       {/* Publicação */}
       <Cartao className="overflow-hidden">
         <div className="flex items-center gap-3 bg-slate-900 px-5 py-4 text-white">
@@ -754,6 +765,8 @@ export default function Configuracoes() {
           ))}
         </ol>
       </Cartao>
+
+      </>)}
 
       <Modal
         aberto={modalUsuario}

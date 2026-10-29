@@ -1,3 +1,4 @@
+import { requisicaoSupabase, usandoSupabase } from "@/supabaseBackend";
 import type { Config, DadosApi, GastoOperacional, Sessao, Usuario, Voucher } from "@/types";
 
 
@@ -167,7 +168,7 @@ export function origemApi(): OrigemApi {
 }
 
 export function modoLocal() {
-  return !urlApi();
+  return !usandoSupabase && !urlApi();
 }
 
 /* ---------------- Transporte ---------------- */
@@ -272,6 +273,7 @@ async function enviar<T>(url: string, payload: Record<string, unknown>): Promise
 }
 
 async function req<T>(payload: Record<string, unknown>): Promise<T> {
+  if (usandoSupabase) return requisicaoSupabase<T>(payload);
   const url = urlApi();
   if (!url) throw new ErroApi("URL do Apps Script não configurada. Vá em Configurações → Banco de dados e cole a URL terminada em /exec para que os dados fiquem salvos em todos os acessos.", false);
   return enviar<T>(url, payload);
