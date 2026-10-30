@@ -1,2 +1,9 @@
 node_modules/
 dist/
+
+# Backups/exports de migração podem conter dados pessoais
+snapshot.sql
+*-snapshot.sql
+
+__pycache__/
+*.py[cod]
