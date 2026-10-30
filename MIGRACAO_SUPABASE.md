@@ -5,8 +5,9 @@ Config e Auditoria foi colocada no esquema privado `migration_private` do
 projeto Supabase autorizado. As contagens e os identificadores foram conferidos
 com o Excel. Os vouchers, gastos e configurações também foram copiados
 para tabelas operacionais protegidas por RLS, e o adaptador foi preparado nesta
-branch. Ainda faltam o acesso administrador, a reconciliação final e os testes
-reais antes de publicar e trocar o aplicativo.
+branch. Já existe um perfil administrador ativo no projeto de teste. Ainda
+faltam a reconciliação final e os testes reais antes de publicar e trocar o
+aplicativo.
 
 A função temporária usada para copiar o Excel foi removida após a importação.
 As abas de usuários e sessões não foram importadas. Nenhum dado de clientes foi
@@ -59,10 +60,11 @@ o comportamento antigo permanece. Se apenas uma for preenchida, ele falha de
 forma segura e não volta automaticamente para o Google Sheets. Nunca coloque a
 chave `service_role` ou qualquer chave secreta em variáveis `VITE_*`.
 
-A conta autenticada deverá ser criada no painel Supabase com o e-mail indicado
-pelo proprietário, que define a senha diretamente lá. Depois, um administrador
-do banco precisa associar o UUID autenticado a um perfil `vpp_profiles` ativo;
-criar uma conta Auth por si só **não** concede acesso aos dados. A interface de
+Para um novo usuário, a conta autenticada deve ser criada no painel Supabase
+com o e-mail indicado pelo proprietário, que define a senha diretamente lá. Um
+administrador do banco precisa associar o UUID autenticado a um perfil
+`vpp_profiles` ativo; criar uma conta Auth por si só **não** concede acesso aos
+dados. A interface de
 cadastro e ativação de usuários permanece desabilitada no modo Supabase e o
 gerenciamento requer intervenção administrativa no banco. Senhas e sessões do
 Apps Script não foram transferidas.
@@ -75,18 +77,32 @@ anterior continua usando o Google Sheets.
 
 ### Configuração do deploy
 
-O workflow do GitHub Pages ainda precisa receber explicitamente as variáveis de
-repositório no passo `Gerar build`, pois elas não são disponibilizadas ao Vite
-sozinhas. Após criar as variáveis públicas `VITE_SUPABASE_URL` e
-`VITE_SUPABASE_ANON_KEY` em **Settings → Secrets and variables → Actions →
-Variables**, acrescente ao bloco `env` desse passo em `.github/workflows/deploy.yml`:
+Crie `VITE_SUPABASE_URL` e `VITE_SUPABASE_ANON_KEY` como variáveis em
+**Settings → Secrets and variables → Actions → Variables** no repositório. No
+Supabase, a URL está em **Connect** ou nas configurações de API; use a chave
+**publishable** ou a chave legada **anon public** para `VITE_SUPABASE_ANON_KEY`.
+Essas informações são públicas; não use a chave `service_role` ou qualquer
+chave secreta no frontend.
+
+O workflow de deploy não foi alterado por falta de permissão para workflows na
+conexão GitHub. Uma pessoa com essa permissão deve acrescentar ao bloco `env`
+do passo `Gerar build`, em `.github/workflows/deploy.yml`:
 
 ```yaml
 VITE_SUPABASE_URL: ${{ vars.VITE_SUPABASE_URL }}
 VITE_SUPABASE_ANON_KEY: ${{ vars.VITE_SUPABASE_ANON_KEY }}
 ```
 
-A conexão usada para preparar este PR não tinha permissão para alterar workflows,
-por isso esse ajuste **não está incluído no PR**. Faça-o apenas depois da
-reconciliação final e da validação do login e dos fluxos de uso. Não configure
-nenhuma chave privada ou `service_role` como variável de build.
+Sem essa alteração e um novo build, o site publicado não usará as variáveis do
+Supabase. Antes do corte, conclua a reconciliação e valide o login e os fluxos de
+uso.
+
+### Colunas de vouchers
+
+A tabela operacional `vpp_vouchers` continua sendo a única tabela de vouchers.
+Além de `id` e `data`, ela possui colunas de consulta geradas a partir do JSON;
+essas colunas não é possível digitar diretamente. Edite pelo aplicativo, que
+continua salvando o objeto completo em `data`. O campo `a_receber` reflete o
+valor histórico salvo no JSON, não é um cálculo atualizado automaticamente e
+pode estar ausente ou incorreto. Os valores ambíguos precisam de reconciliação;
+não os trate como valores financeiros confirmados.
