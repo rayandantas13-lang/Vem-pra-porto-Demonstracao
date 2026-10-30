@@ -320,7 +320,7 @@ export default function Configuracoes() {
           <div>
             <h2 className="font-bold text-slate-900">Mensagem do WhatsApp</h2>
             <p className="text-xs text-slate-500">
-              Texto que abrirá preenchido no WhatsApp. No celular, anexe o PDF baixado à conversa.
+              Mensagem que acompanha o voucher. No Android, o PDF vai anexado e o texto é copiado para colar na legenda.
             </p>
           </div>
         </div>
@@ -376,8 +376,7 @@ export default function Configuracoes() {
             </div>
             <p className="mt-3 flex items-start gap-1.5 text-[11px] leading-relaxed text-slate-500">
               <Icon name="clip" className="mt-0.5 size-3.5 shrink-0" />
-              No celular, a mensagem abre preenchida e o PDF é baixado separadamente para você
-              anexar. No computador, o PDF é baixado e o WhatsApp abre com o texto pronto.
+              No Android, o PDF é compartilhado como anexo e o texto fica copiado: toque em “Adicione uma legenda” e cole. Se o navegador não suportar anexos, o PDF será baixado para anexar manualmente.
             </p>
           </div>
         </div>
