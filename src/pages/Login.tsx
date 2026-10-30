@@ -1,7 +1,14 @@
 import { useEffect, useState } from "react";
 import type { Sessao } from "@/types";
 import { api, modoLocal } from "@/api";
-import { configuracaoSupabaseIncompleta, usandoSupabase } from "@/supabaseBackend";
+import {
+  configuracaoSupabaseIncompleta,
+  erroDoLinkRecuperacao,
+  recuperacaoPendente,
+  redefinirSenha,
+  solicitarRedefinicaoSenha,
+  usandoSupabase,
+} from "@/supabaseBackend";
 import { Icon } from "@/components/Icon";
 import { Aviso, Botao, Campo, Entrada } from "@/components/ui";
 import { LogoIcon } from "@/components/Logo";
@@ -15,15 +22,21 @@ const vazio = {
   chaveInstalacao: "",
 };
 
+type Vista = "entrar" | "esqueci" | "novaSenha";
+
 export default function Login({ aoEntrar }: { aoEntrar: (s: Sessao) => void }) {
   const [usuario, setUsuario] = useState("");
   const [senha, setSenha] = useState("");
   const [verSenha, setVerSenha] = useState(false);
   const [form, setForm] = useState(vazio);
   const [criando, setCriando] = useState(false);
+  const [vista, setVista] = useState<Vista>(recuperacaoPendente ? "novaSenha" : "entrar");
+  const [novaSenha, setNovaSenha] = useState("");
+  const [confirmarNova, setConfirmarNova] = useState("");
+  const [aviso, setAviso] = useState("");
   const [temAdmin, setTemAdmin] = useState<boolean | null>(null);
   const [carregando, setCarregando] = useState(false);
-  const [erro, setErro] = useState("");
+  const [erro, setErro] = useState(() => erroDoLinkRecuperacao());
 
   const local = modoLocal();
 
@@ -42,6 +55,44 @@ export default function Login({ aoEntrar }: { aoEntrar: (s: Sessao) => void }) {
       aoEntrar(await api.entrar(usuario.trim(), senha));
     } catch (err) {
       setErro(err instanceof Error ? err.message : "Não foi possível entrar.");
+    } finally {
+      setCarregando(false);
+    }
+  };
+
+  const enviarLink = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!usuario.trim()) return setErro("Informe o seu e-mail para receber o link.");
+    setCarregando(true);
+    setErro("");
+    setAviso("");
+    try {
+      await solicitarRedefinicaoSenha(usuario);
+      setAviso(
+        "Se esse e-mail estiver cadastrado, enviamos um link de redefinição. Abra o e-mail e clique no link para criar a nova senha (verifique também o spam).",
+      );
+    } catch (err) {
+      setErro(err instanceof Error ? err.message : "Não foi possível enviar o e-mail.");
+    } finally {
+      setCarregando(false);
+    }
+  };
+
+  const salvarNovaSenha = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (novaSenha.length < 8) return setErro("A nova senha precisa ter pelo menos 8 caracteres.");
+    if (novaSenha !== confirmarNova) return setErro("As senhas não conferem.");
+    setCarregando(true);
+    setErro("");
+    try {
+      await redefinirSenha(novaSenha);
+      setNovaSenha("");
+      setConfirmarNova("");
+      setSenha("");
+      setVista("entrar");
+      setAviso("Senha redefinida com sucesso! Entre com a nova senha.");
+    } catch (err) {
+      setErro(err instanceof Error ? err.message : "Não foi possível redefinir a senha.");
     } finally {
       setCarregando(false);
     }
@@ -95,11 +146,81 @@ export default function Login({ aoEntrar }: { aoEntrar: (s: Sessao) => void }) {
           <div className="mb-5 flex items-center gap-2">
             <Icon name={criando ? "user" : "lock"} className="size-4 text-sky-600" />
             <h2 className="font-bold text-slate-900">
-              {criando ? "Criar administrador" : "Entrar no sistema"}
+              {vista === "novaSenha"
+                ? "Redefinir senha"
+                : vista === "esqueci"
+                  ? "Esqueci minha senha"
+                  : criando
+                    ? "Criar administrador"
+                    : "Entrar no sistema"}
             </h2>
           </div>
 
-          {criando ? (
+          {vista === "novaSenha" ? (
+            <form onSubmit={salvarNovaSenha} className="space-y-3.5">
+              <Aviso tom="info">
+                Você abriu o link de redefinição. Crie a sua nova senha para voltar a entrar
+                no sistema.
+              </Aviso>
+              <Campo rotulo="Nova senha *">
+                <Entrada
+                  required
+                  type="password"
+                  minLength={8}
+                  value={novaSenha}
+                  onChange={(e) => setNovaSenha(e.target.value)}
+                  placeholder="mín. 8 caracteres"
+                  autoComplete="new-password"
+                  autoFocus
+                />
+              </Campo>
+              <Campo rotulo="Confirmar nova senha *">
+                <Entrada
+                  required
+                  type="password"
+                  minLength={8}
+                  value={confirmarNova}
+                  onChange={(e) => setConfirmarNova(e.target.value)}
+                  placeholder="repita a nova senha"
+                  autoComplete="new-password"
+                />
+              </Campo>
+              <Botao icone="check" carregando={carregando} className="w-full py-3">
+                Salvar nova senha
+              </Botao>
+            </form>
+          ) : vista === "esqueci" ? (
+            <form onSubmit={enviarLink} className="space-y-3.5">
+              <Aviso tom="info">
+                Informe o e-mail da sua conta. Vamos enviar um link para você criar uma
+                nova senha.
+              </Aviso>
+              <Campo rotulo="E-mail">
+                <Entrada
+                  required
+                  type="email"
+                  value={usuario}
+                  onChange={(e) => setUsuario(e.target.value)}
+                  placeholder="seu@email.com"
+                  autoComplete="email"
+                  autoFocus
+                />
+              </Campo>
+              <Botao icone="mail" carregando={carregando} className="w-full py-3">
+                Enviar link de redefinição
+              </Botao>
+              <button
+                type="button"
+                onClick={() => {
+                  setVista("entrar");
+                  setErro("");
+                }}
+                className="w-full text-xs font-semibold text-slate-500 hover:text-slate-800"
+              >
+                Voltar para o login
+              </button>
+            </form>
+          ) : criando ? (
             <form onSubmit={criarAdmin} className="space-y-3.5">
               <Aviso tom="info">
                 Crie o administrador principal. Depois disso, novos usuários só podem ser
@@ -236,6 +357,12 @@ export default function Login({ aoEntrar }: { aoEntrar: (s: Sessao) => void }) {
 
           {configuracaoSupabaseIncompleta && <Aviso tom="erro">Configuração incompleta: informe a URL e a chave pública do Supabase no build. O aplicativo não voltará automaticamente para o Google Sheets.</Aviso>}
 
+          {aviso && (
+            <div className="mt-4">
+              <Aviso tom="ok">{aviso}</Aviso>
+            </div>
+          )}
+
           {erro && (
             <div className="mt-4">
               <Aviso tom="erro">{erro}</Aviso>
@@ -245,8 +372,10 @@ export default function Login({ aoEntrar }: { aoEntrar: (s: Sessao) => void }) {
           {local && (
             <p className="mt-3 text-[11px] leading-relaxed text-slate-400">
               Entre como administrador e conecte o Google Sheets em{" "}
-              <b className="text-slate-500">Configurações → Banco de dados</b>. Você também pode
-              definir a variável <code className="font-mono">VITE_APPS_SCRIPT_URL</code> no GitHub.
+              <b className="text-slate-500">Configurações → Banco de dados</b>. Para usar o
+              Supabase, defina <code className="font-mono">VITE_SUPABASE_URL</code> e{" "}
+              <code className="font-mono">VITE_SUPABASE_ANON_KEY</code> nas variáveis do
+              repositório no GitHub e faça um novo deploy.
             </p>
           )}
 
