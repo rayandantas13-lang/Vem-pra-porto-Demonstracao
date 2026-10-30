@@ -6,6 +6,7 @@ import {
   brl,
   dataBR,
   datasPasseios,
+  abrirLinkWhatsApp,
   linkAbrirWhatsApp,
   linkWhatsAppTelefone,
   mascaraCnpj,
@@ -705,7 +706,9 @@ export async function compartilharPDFVoucher(
 
 export function baixarEAbrirWhatsApp(v: Voucher, config: Config) {
   baixarPDFVoucher(v, config);
-  window.open(linkAbrirWhatsApp(mensagemVoucher(v, config)), "_blank", "noopener,noreferrer");
+  // Em celulares e WebViews, uma nova janela aberta depois do await pode ser
+  // bloqueada. O helper navega na aba atual em dispositivos de toque.
+  abrirLinkWhatsApp(linkAbrirWhatsApp(mensagemVoucher(v, config)));
 }
 
 /* ============================================================

@@ -344,7 +344,11 @@ export default function Vouchers() {
           "PDF baixado. Escolha o contato no WhatsApp e anexe o arquivo que acabou de baixar.",
           "info",
         );
+      } else if (r === "cancelado") {
+        notificar("Compartilhamento cancelado. O voucher não foi enviado.", "info");
       }
+    } catch {
+      notificar("Não foi possível preparar o PDF ou abrir o WhatsApp. Tente baixar o PDF e compartilhar pelo próprio celular.", "erro");
     } finally {
       setEnviando(null);
     }
