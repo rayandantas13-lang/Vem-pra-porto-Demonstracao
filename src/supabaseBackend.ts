@@ -12,6 +12,66 @@ function db() {
   return cliente;
 }
 
+/* -------- Recuperação de senha -------- */
+
+const RECUPERACAO_KEY = "vpp.recuperacao-senha";
+
+/**
+ * O link do e-mail de recuperação chega como #access_token=...&type=recovery.
+ * Capturamos isso na carga da página (antes de o supabase-js limpar a URL) e
+ * guardamos a marca: enquanto ela existir, o app NÃO entra automaticamente
+ * com a sessão de recuperação — primeiro a pessoa define a nova senha.
+ */
+function detectarRecuperacaoNaUrl(): boolean {
+  try {
+    const hash = new URLSearchParams(window.location.hash.replace(/^#\/?/, ""));
+    if (hash.get("type") === "recovery" && hash.get("access_token")) {
+      sessionStorage.setItem(RECUPERACAO_KEY, "1");
+      return true;
+    }
+    return sessionStorage.getItem(RECUPERACAO_KEY) === "1";
+  } catch {
+    return false;
+  }
+}
+
+export const recuperacaoPendente = detectarRecuperacaoNaUrl();
+
+/** Erro devolvido no link (ex.: link expirado ou já utilizado), se houver. */
+export function erroDoLinkRecuperacao(): string {
+  try {
+    const hash = new URLSearchParams(window.location.hash.replace(/^#\/?/, ""));
+    const codigo = hash.get("error_code") || "";
+    if (!hash.get("error") && !codigo) return "";
+    if (codigo === "otp_expired")
+      return "Esse link de redefinição expirou ou já foi usado. Peça um novo em “Esqueci minha senha”.";
+    return "Esse link de redefinição não é mais válido. Peça um novo em “Esqueci minha senha”.";
+  } catch {
+    return "";
+  }
+}
+
+/** Envia o e-mail com o link para redefinir a senha, voltando para este site. */
+export async function solicitarRedefinicaoSenha(email: string): Promise<void> {
+  const destino = `${window.location.origin}${window.location.pathname}`;
+  const { error } = await db().auth.resetPasswordForEmail(email.trim(), { redirectTo: destino });
+  if (error) throw new Error("Não foi possível enviar o e-mail de redefinição. Tente novamente em alguns instantes.");
+}
+
+/** Salva a nova senha da sessão de recuperação e encerra essa sessão. */
+export async function redefinirSenha(novaSenha: string): Promise<void> {
+  const { error } = await db().auth.updateUser({ password: novaSenha });
+  if (error)
+    throw new Error(
+      /session/i.test(error.message)
+        ? "O link de redefinição expirou. Peça um novo em “Esqueci minha senha”."
+        : "Não foi possível salvar a nova senha. Tente novamente.",
+    );
+  sessionStorage.removeItem(RECUPERACAO_KEY);
+  await db().auth.signOut().catch(() => {});
+  window.history.replaceState(null, "", window.location.pathname + window.location.search);
+}
+
 function erro(e: { message: string } | null) {
   if (e) throw new Error(e.message);
 }
@@ -28,6 +88,8 @@ async function sessaoDe(s: Session): Promise<Sessao> {
 }
 
 export async function restaurarSupabase(): Promise<Sessao | null> {
+  // Durante a redefinição de senha, a sessão do link não vira login automático.
+  if (recuperacaoPendente) return null;
   const { data, error } = await db().auth.getSession();
   erro(error);
   if (!data.session) return null;

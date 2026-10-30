@@ -84,18 +84,12 @@ Supabase, a URL está em **Connect** ou nas configurações de API; use a chave
 Essas informações são públicas; não use a chave `service_role` ou qualquer
 chave secreta no frontend.
 
-O workflow de deploy não foi alterado por falta de permissão para workflows na
-conexão GitHub. Uma pessoa com essa permissão deve acrescentar ao bloco `env`
-do passo `Gerar build`, em `.github/workflows/deploy.yml`:
-
-```yaml
-VITE_SUPABASE_URL: ${{ vars.VITE_SUPABASE_URL }}
-VITE_SUPABASE_ANON_KEY: ${{ vars.VITE_SUPABASE_ANON_KEY }}
-```
-
-Sem essa alteração e um novo build, o site publicado não usará as variáveis do
-Supabase. Antes do corte, conclua a reconciliação e valide o login e os fluxos de
-uso.
+O workflow de deploy (`.github/workflows/deploy.yml`) já injeta
+`VITE_SUPABASE_URL` e `VITE_SUPABASE_ANON_KEY` a partir das variáveis do
+repositório no passo `Gerar build`. Sem um novo build/deploy após criar as
+variáveis, o site publicado não usará as variáveis do Supabase — variáveis
+`VITE_*` são embutidas no momento do build, não lidas em tempo de execução.
+Antes do corte, conclua a reconciliação e valide o login e os fluxos de uso.
 
 ### Colunas de vouchers
 
