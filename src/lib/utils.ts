@@ -359,10 +359,15 @@ export function parseNumero(v: unknown): number {
   if (v === null || v === undefined) return 0;
   const str = String(v).trim();
   if (!str) return 0;
-  const limpo = str
-    .replace(/R\$\s?/i, "")
-    .replace(/\./g, "")
-    .replace(/,/g, ".");
+  const valor = str.replace(/R\$\s?/i, "").replace(/\s/g, "");
+  // O snapshot Supabase guarda decimais como texto com ponto ("259.8").
+  // Valores com vírgula seguem o padrão brasileiro; sem vírgula, preserve
+  // o ponto decimal, exceto grupos explícitos de milhares ("1.234").
+  const limpo = valor.includes(",")
+    ? valor.replace(/\./g, "").replace(",", ".")
+    : /^-?\d{1,3}(\.\d{3})+$/.test(valor)
+      ? valor.replace(/\./g, "")
+      : valor;
   const n = Number(limpo);
   return Number.isFinite(n) ? n : 0;
 }
