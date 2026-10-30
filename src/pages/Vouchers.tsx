@@ -329,7 +329,7 @@ export default function Vouchers() {
 
   /**
    * Envia o voucher pelo WhatsApp:
-   * - no celular, anexa o PDF e abre a lista de contatos;
+   * - no celular, abre o texto pronto e baixa o PDF para anexar manualmente;
    * - no computador, baixa o PDF e abre o WhatsApp com a mensagem pronta.
    * Sem número fixo: a escolha do contato é feita no próprio WhatsApp.
    */
@@ -693,7 +693,7 @@ export default function Vouchers() {
                       <button
                         onClick={() => enviar(v)}
                         disabled={enviando === v.id}
-                        title="Abre o compartilhamento com o PDF anexado para você escolher o contato"
+                        title="Abre o WhatsApp com o texto pronto; no celular, baixe e anexe o PDF manualmente"
                         className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-emerald-600 px-3 py-2.5 text-xs font-bold text-white transition hover:bg-emerald-700 disabled:opacity-60"
                       >
                         <Icon name="send" className="size-4" />

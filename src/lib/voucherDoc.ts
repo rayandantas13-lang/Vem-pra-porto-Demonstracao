@@ -683,6 +683,15 @@ export async function compartilharPDFVoucher(
   config: Config
 ): Promise<ResultadoCompartilhamento> {
   try {
+    // No Android, o WhatsApp recebe o PDF, mas ignora o campo `text` da
+    // Web Share API (a legenda fica vazia). No celular, preferimos abrir
+    // wa.me com o texto preenchido e deixar o PDF baixado para anexar.
+    const dispositivoMovel =
+      typeof navigator !== "undefined" &&
+      (/Android|iPhone|iPad|iPod/i.test(navigator.userAgent) ||
+        (navigator.maxTouchPoints > 0 && window.matchMedia("(hover: none)").matches));
+    if (dispositivoMovel) return "sem-suporte";
+
     const arquivo = arquivoPDFVoucher(v, config);
     if (
       typeof navigator === "undefined" ||

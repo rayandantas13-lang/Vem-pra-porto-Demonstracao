@@ -320,8 +320,7 @@ export default function Configuracoes() {
           <div>
             <h2 className="font-bold text-slate-900">Mensagem do WhatsApp</h2>
             <p className="text-xs text-slate-500">
-              Único texto enviado junto com o PDF do voucher — o WhatsApp abre para você escolher o
-              contato.
+              Texto que abrirá preenchido no WhatsApp. No celular, anexe o PDF baixado à conversa.
             </p>
           </div>
         </div>
@@ -377,8 +376,8 @@ export default function Configuracoes() {
             </div>
             <p className="mt-3 flex items-start gap-1.5 text-[11px] leading-relaxed text-slate-500">
               <Icon name="clip" className="mt-0.5 size-3.5 shrink-0" />
-              A mensagem vai acompanhada do PDF do voucher. No celular o PDF já vai anexado; no
-              computador ele é baixado e o WhatsApp abre para você anexar e escolher o contato.
+              No celular, a mensagem abre preenchida e o PDF é baixado separadamente para você
+              anexar. No computador, o PDF é baixado e o WhatsApp abre com o texto pronto.
             </p>
           </div>
         </div>
