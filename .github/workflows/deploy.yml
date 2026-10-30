@@ -31,11 +31,9 @@ jobs:
         run: npm ci
 
       - name: Gerar build (arquivo único)
-        # A variável do repositório é injetada aqui.
-        # Crie em: Settings > Secrets and variables > Actions > Variables
-        # Nome: VITE_APPS_SCRIPT_URL
-        # Valor: https://script.google.com/macros/s/SEU_ID/exec
         env:
+          VITE_SUPABASE_URL: ${{ vars.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ vars.VITE_SUPABASE_ANON_KEY }}
           VITE_APPS_SCRIPT_URL: ${{ vars.VITE_APPS_SCRIPT_URL }}
         run: npm run build
 
